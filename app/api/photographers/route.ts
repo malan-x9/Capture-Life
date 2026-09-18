@@ -1,8 +1,7 @@
+import { NextResponse } from "next/server";
 import { connectDB } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth";
 import Photographer from "@/models/Photographer";
-import { NextResponse } from "next/server";
-
 export async function POST(request: Request) {
   try {
     const user = await getCurrentUser();
@@ -120,6 +119,100 @@ export async function GET() {
       {
         success: false,
         message: "Something went wrong while fetching photographers",
+      },
+      { status: 500 }
+    );
+  }
+}
+export async function PATCH(request: Request) {
+  try {
+    const user = await getCurrentUser();
+
+    if (!user) {
+      return NextResponse.json(
+        {
+          success: false,
+          message: "You must be logged in",
+        },
+        { status: 401 }
+      );
+    }
+
+    if (user.role !== "photographer") {
+      return NextResponse.json(
+        {
+          success: false,
+          message: "Only photographers can update a photographer profile",
+        },
+        { status: 403 }
+      );
+    }
+
+    const body = await request.json();
+
+    const {
+      businessName,
+      bio,
+      location,
+      specialties,
+      experience,
+      startingPrice,
+    } = body;
+
+    await connectDB();
+
+    const photographer = await Photographer.findOne({
+      userId: user._id,
+    });
+
+    if (!photographer) {
+      return NextResponse.json(
+        {
+          success: false,
+          message: "Photographer profile not found",
+        },
+        { status: 404 }
+      );
+    }
+
+    if (businessName !== undefined) {
+      photographer.businessName = businessName;
+    }
+
+    if (bio !== undefined) {
+      photographer.bio = bio;
+    }
+
+    if (location !== undefined) {
+      photographer.location = location;
+    }
+
+    if (specialties !== undefined) {
+      photographer.specialties = specialties;
+    }
+
+    if (experience !== undefined) {
+      photographer.experience = Number(experience);
+    }
+
+    if (startingPrice !== undefined) {
+      photographer.startingPrice = Number(startingPrice);
+    }
+
+    await photographer.save();
+
+    return NextResponse.json({
+      success: true,
+      message: "Photographer profile updated successfully",
+      photographer,
+    });
+  } catch (error) {
+    console.error("Update photographer profile error:", error);
+
+    return NextResponse.json(
+      {
+        success: false,
+        message: "Something went wrong while updating your profile",
       },
       { status: 500 }
     );

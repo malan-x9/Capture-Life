@@ -1,5 +1,10 @@
 import mongoose, { Schema, Document } from "mongoose";
 
+export interface IPortfolioImage {
+  url: string;
+  publicId: string;
+}
+
 export interface IPhotographer extends Document {
   userId: mongoose.Types.ObjectId;
   businessName: string;
@@ -8,7 +13,7 @@ export interface IPhotographer extends Document {
   specialties: string[];
   experience: number;
   startingPrice: number;
-  portfolio: string[];
+  portfolio: IPortfolioImage[];
   isAvailable: boolean;
 }
 
@@ -57,7 +62,18 @@ const photographerSchema = new Schema<IPhotographer>(
     },
 
     portfolio: {
-      type: [String],
+      type: [
+        {
+          url: {
+            type: String,
+            required: true,
+          },
+          publicId: {
+            type: String,
+            required: true,
+          },
+        },
+      ],
       default: [],
     },
 
@@ -73,9 +89,6 @@ const photographerSchema = new Schema<IPhotographer>(
 
 const Photographer =
   mongoose.models.Photographer ||
-  mongoose.model<IPhotographer>(
-    "Photographer",
-    photographerSchema
-  );
+  mongoose.model<IPhotographer>("Photographer", photographerSchema);
 
 export default Photographer;
