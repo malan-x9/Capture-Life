@@ -1,5 +1,6 @@
 import { connectDB } from "@/lib/db";
 import User from "@/models/User";
+import Photographer from "@/models/Photographer";
 import bcrypt from "bcryptjs";
 import { NextResponse } from "next/server";
 
@@ -33,12 +34,47 @@ export async function POST(request: Request) {
 
     const hashedPassword = await bcrypt.hash(password, 10);
 
+    const userRole = role || "customer";
+
+    if (userRole !== "customer" && userRole !== "photographer") {
+      return NextResponse.json(
+        {
+          success: false,
+          message: "Invalid user role",
+        },
+        { status: 400 }
+      );
+    }
+
     const user = await User.create({
       name,
       email,
       password: hashedPassword,
-      role: role || "customer",
+      role: userRole,
     });
+
+    // Every photographer account must have a Photographer profile
+    // linked to the newly created User document.
+    if (user.role === "photographer") {
+      try {
+        await Photographer.create({
+          userId: user._id,
+          businessName: `${user.name}'s Photography`,
+          bio: "Complete your photographer profile to tell customers about your services.",
+          location: "Not specified",
+          specialties: [],
+          experience: 0,
+          startingPrice: 0,
+          portfolio: [],
+          isAvailable: true,
+        });
+      } catch (photographerError) {
+        // Avoid leaving an incomplete photographer account if profile
+        // creation fails.
+        await User.findByIdAndDelete(user._id);
+        throw photographerError;
+      }
+    }
 
     return NextResponse.json(
       {
