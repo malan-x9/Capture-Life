@@ -15,7 +15,14 @@ type Reservation = {
     businessName: string;
     location: string;
     startingPrice: number;
-    portfolio: string[];
+    portfolio: {
+      url: string;
+      publicId: string;
+    }[];
+    userId?: {
+      name: string;
+      profileImage?: string;
+    };
   };
 };
 function getStatusClasses(status: string) {
@@ -36,6 +43,15 @@ function getStatusClasses(status: string) {
       return "bg-gray-100 text-gray-700";
   }
 }
+function formatEventDate(date: string) {
+  return new Date(date).toLocaleDateString("en-US", {
+    weekday: "long",
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  });
+}
+
 export default function CustomerDashboardPage() {
   const [reservations, setReservations] = useState<Reservation[]>([]);
   const [loading, setLoading] = useState(true);
@@ -81,25 +97,10 @@ const rejectedReservations = reservations.filter(
     fetchReservations();
   }, []);
 
-  function getStatusStyle(status: Reservation["status"]) {
-    if (status === "accepted") {
-      return "bg-green-100 text-green-700";
-    }
-
-    if (status === "rejected") {
-      return "bg-red-100 text-red-700";
-    }
-
-    if (status === "completed") {
-      return "bg-blue-100 text-blue-700";
-    }
-
-    return "bg-yellow-100 text-yellow-700";
-  }
 
   if (loading) {
     return (
-      <main className="min-h-screen bg-[#f5f0e8] px-6 py-16">
+      <main className="min-h-screen bg-[#eeedeb] px-6 py-16">
         <p className="text-center text-[#6b625b]">
           Loading your reservations...
         </p>
@@ -148,48 +149,14 @@ async function handleCancelReservation(reservationId: string) {
   }
 }
   return (
-    <main className="min-h-screen bg-[#f5f0e8] px-6 py-16">
+    <main className="min-h-screen bg-[#eeedeb] px-6 py-16">
       <div className="mx-auto max-w-6xl">
         <p className="text-sm uppercase tracking-[0.2em] text-[#dd492f]">
           Customer Dashboard
         </p>
-        <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
-  <div className="rounded-2xl bg-white p-5 shadow-sm">
-    <p className="text-sm text-gray-500">Total Reservations</p>
-    <p className="mt-2 text-3xl font-semibold text-gray-900">
-      {totalReservations}
-    </p>
-  </div>
+        
 
-  <div className="rounded-2xl bg-yellow-50 p-5 shadow-sm">
-    <p className="text-sm text-yellow-700">Pending</p>
-    <p className="mt-2 text-3xl font-semibold text-yellow-800">
-      {pendingReservations}
-    </p>
-  </div>
-
-  <div className="rounded-2xl bg-green-50 p-5 shadow-sm">
-    <p className="text-sm text-green-700">Accepted</p>
-    <p className="mt-2 text-3xl font-semibold text-green-800">
-      {acceptedReservations}
-    </p>
-  </div>
-
-  <div className="rounded-2xl bg-blue-50 p-5 shadow-sm">
-    <p className="text-sm text-blue-700">Completed</p>
-    <p className="mt-2 text-3xl font-semibold text-blue-800">
-      {completedReservations}
-    </p>
-  </div>
-
-  <div className="rounded-2xl bg-red-50 p-5 shadow-sm">
-    <p className="text-sm text-red-700">Rejected</p>
-    <p className="mt-2 text-3xl font-semibold text-red-800">
-      {rejectedReservations}
-    </p>
-  </div>
-</div>
-        <h1 className="mt-3 text-5xl font-serif text-[#241914]">
+        <h1 className="mt-3 text-5xl font-sans text-[#241914]">
           My Reservations
         </h1>
 
@@ -205,7 +172,7 @@ async function handleCancelReservation(reservationId: string) {
 
         {reservations.length === 0 && !message && (
           <div className="mt-10 rounded-2xl bg-white p-10 text-center">
-            <h2 className="text-2xl font-serif text-[#241914]">
+            <h2 className="text-2xl font-sans text-[#241914]">
               No reservations yet
             </h2>
 
@@ -225,7 +192,10 @@ async function handleCancelReservation(reservationId: string) {
         <div className="mt-10 space-y-6">
           {reservations.map((reservation) => {
             const photographer = reservation.photographerId;
-            const image = photographer?.portfolio?.[0];
+            const image =
+              photographer?.userId?.profileImage ||
+              photographer?.portfolio?.[0]?.url ||
+              "";
 
             return (
               <div
@@ -250,7 +220,7 @@ async function handleCancelReservation(reservationId: string) {
                   <div className="p-6">
                     <div className="flex flex-wrap items-start justify-between gap-4">
                       <div>
-                        <h2 className="text-2xl font-serif text-[#241914]">
+                        <h2 className="text-2xl font-sans text-[#241914]">
                           {photographer?.businessName ||
                             "Photographer unavailable"}
                         </h2>
@@ -300,9 +270,7 @@ async function handleCancelReservation(reservationId: string) {
                         </p>
 
                         <p className="mt-1 font-medium text-[#241914]">
-                          {new Date(
-                            reservation.eventDate
-                          ).toLocaleDateString()}
+                          {formatEventDate(reservation.eventDate)}
                         </p>
                       </div>
 
@@ -317,8 +285,49 @@ async function handleCancelReservation(reservationId: string) {
                       </div>
                     </div>
 
+                    <div className="mt-6 rounded-xl border border-[#eee5dc] bg-[#faf8f5] p-4">
+                      <p className="text-xs font-medium uppercase tracking-wide text-[#8b8178]">
+                        Reservation Progress
+                      </p>
+
+                      <div className="mt-4 flex flex-wrap items-center gap-2 text-xs">
+                        <span className="rounded-full bg-yellow-100 px-3 py-1 text-yellow-700">
+                          Request Sent
+                        </span>
+
+                        <span className="text-[#b8afa7]">→</span>
+
+                        <span
+                          className={`rounded-full px-3 py-1 ${
+                            reservation.status === "accepted" ||
+                            reservation.status === "completed"
+                              ? "bg-green-100 text-green-700"
+                              : reservation.status === "rejected"
+                              ? "bg-red-100 text-red-700"
+                              : "bg-gray-100 text-gray-500"
+                          }`}
+                        >
+                          {reservation.status === "rejected"
+                            ? "Rejected"
+                            : "Photographer Response"}
+                        </span>
+
+                        <span className="text-[#b8afa7]">→</span>
+
+                        <span
+                          className={`rounded-full px-3 py-1 ${
+                            reservation.status === "completed"
+                              ? "bg-blue-100 text-blue-700"
+                              : "bg-gray-100 text-gray-500"
+                          }`}
+                        >
+                          Completed
+                        </span>
+                      </div>
+                    </div>
+
                     {reservation.message && (
-                      <div className="mt-6 rounded-xl bg-[#f5f0e8] p-4">
+                      <div className="mt-6 rounded-xl bg-[#eeedeb] p-4">
                         <p className="text-xs text-[#8b8178]">
                           Your message
                         </p>

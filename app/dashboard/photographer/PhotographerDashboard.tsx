@@ -17,6 +17,12 @@ type Reservation = {
   };
 };
 
+function formatEventDate(date: string) {
+  return new Date(date).toLocaleDateString("en-US", {
+    weekday: "long", year: "numeric", month: "long", day: "numeric",
+  });
+}
+
 function getStatusClasses(status: string) {
   switch (status) {
     case "pending":
@@ -59,41 +65,6 @@ const completedReservations = reservations.filter(
 const rejectedReservations = reservations.filter(
   (reservation) => reservation.status === "rejected"
 ).length;
-async function updateReservationStatus(
-  reservationId: string,
-  status: "accepted" | "rejected" | "completed"
-) {
-  try {
-    const response = await fetch(`/api/reservations/${reservationId}`, {
-      method: "PATCH",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ status }),
-    });
-
-    const data = await response.json();
-
-    if (!response.ok) {
-      alert(data.message || "Failed to update reservation status");
-      return;
-    }
-
-    // Update the reservation in the dashboard immediately
-    setReservations((previousReservations) =>
-      previousReservations.map((reservation) =>
-        reservation._id === reservationId
-          ? { ...reservation, status }
-          : reservation
-      )
-    );
-
-    alert(data.message || "Reservation status updated successfully");
-  } catch (error) {
-    console.error("Update reservation status error:", error);
-    alert("Something went wrong while updating the reservation");
-  }
-}
   async function fetchReservations() {
     try {
       const response = await fetch("/api/reservations");
@@ -117,7 +88,7 @@ async function updateReservationStatus(
     fetchReservations();
   }, []);
 
-  async function updateReservation(
+  async function updateReservationStatus(
     reservationId: string,
     status: "accepted" | "rejected" | "completed"
   ) {
@@ -160,25 +131,10 @@ async function updateReservationStatus(
     }
   }
 
-  function getStatusStyle(status: Reservation["status"]) {
-    if (status === "accepted") {
-      return "bg-green-100 text-green-700";
-    }
-
-    if (status === "rejected") {
-      return "bg-red-100 text-red-700";
-    }
-
-    if (status === "completed") {
-      return "bg-blue-100 text-blue-700";
-    }
-
-    return "bg-yellow-100 text-yellow-700";
-  }
 
   if (loading) {
     return (
-      <main className="min-h-screen bg-[#f5f0e8] px-6 py-16">
+      <main className="min-h-screen bg-[#eeedeb] px-6 py-16">
         <p className="text-center text-[#6b625b]">
           Loading reservation requests...
         </p>
@@ -219,7 +175,7 @@ async function updateReservationStatus(
 }
 
   return (
-    <main className="min-h-screen bg-[#f5f0e8] px-6 py-16">
+    <main className="min-h-screen bg-[#eeedeb] px-6 py-16">
       
       <div className="mx-auto max-w-6xl">
         <div className="mb-8 flex flex-col justify-between gap-4 rounded-2xl bg-white p-6 shadow-sm sm:flex-row sm:items-center">
@@ -252,43 +208,8 @@ async function updateReservationStatus(
         <p className="text-sm uppercase tracking-[0.2em] text-[#dd492f]">
           Photographer Dashboard
         </p>
-        <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
-  <div className="rounded-2xl bg-white p-5 shadow-sm">
-    <p className="text-sm text-gray-500">Total Requests</p>
-    <p className="mt-2 text-3xl font-semibold text-gray-900">
-      {totalReservations}
-    </p>
-  </div>
-
-  <div className="rounded-2xl bg-yellow-50 p-5 shadow-sm">
-    <p className="text-sm text-yellow-700">Pending</p>
-    <p className="mt-2 text-3xl font-semibold text-yellow-800">
-      {pendingReservations}
-    </p>
-  </div>
-
-  <div className="rounded-2xl bg-green-50 p-5 shadow-sm">
-    <p className="text-sm text-green-700">Accepted</p>
-    <p className="mt-2 text-3xl font-semibold text-green-800">
-      {acceptedReservations}
-    </p>
-  </div>
-
-  <div className="rounded-2xl bg-blue-50 p-5 shadow-sm">
-    <p className="text-sm text-blue-700">Completed</p>
-    <p className="mt-2 text-3xl font-semibold text-blue-800">
-      {completedReservations}
-    </p>
-  </div>
-
-  <div className="rounded-2xl bg-red-50 p-5 shadow-sm">
-    <p className="text-sm text-red-700">Rejected</p>
-    <p className="mt-2 text-3xl font-semibold text-red-800">
-      {rejectedReservations}
-    </p>
-  </div>
-</div>
-        <h1 className="mt-3 text-5xl font-serif text-[#241914]">
+       
+        <h1 className="mt-3 text-5xl font-sans text-[#241914]">
           Reservation Requests
         </h1>
 
@@ -304,7 +225,7 @@ async function updateReservationStatus(
 
         {reservations.length === 0 && !message && (
           <div className="mt-10 rounded-2xl bg-white p-10 text-center">
-            <h2 className="text-2xl font-serif text-[#241914]">
+            <h2 className="text-2xl font-sans text-[#241914]">
               No reservation requests
             </h2>
 
@@ -321,15 +242,26 @@ async function updateReservationStatus(
               className="rounded-2xl bg-white p-6 shadow-sm"
             >
               <div className="flex flex-wrap items-start justify-between gap-4">
-                <div>
-                  <h2 className="text-2xl font-serif text-[#241914]">
-                    {reservation.customerId?.name ||
-                      "Unknown customer"}
-                  </h2>
-
-                  <p className="mt-1 text-sm text-[#6b625b]">
-                    {reservation.customerId?.email}
-                  </p>
+                <div className="flex items-center gap-4">
+                  {reservation.customerId?.profileImage ? (
+                    <img
+                      src={reservation.customerId.profileImage}
+                      alt={reservation.customerId.name || "Customer"}
+                      className="h-14 w-14 rounded-full object-cover"
+                    />
+                  ) : (
+                    <div className="flex h-14 w-14 items-center justify-center rounded-full bg-[#e8dfd4] text-lg font-semibold text-[#6b625b]">
+                      {(reservation.customerId?.name || "U").charAt(0).toUpperCase()}
+                    </div>
+                  )}
+                  <div>
+                    <h2 className="text-2xl font-sans text-[#241914]">
+                      {reservation.customerId?.name || "Unknown customer"}
+                    </h2>
+                    <p className="mt-1 text-sm text-[#6b625b]">
+                      {reservation.customerId?.email}
+                    </p>
+                  </div>
                 </div>
 
                 <span
@@ -358,9 +290,7 @@ async function updateReservationStatus(
                   </p>
 
                   <p className="mt-1 font-medium text-[#241914]">
-                    {new Date(
-                      reservation.eventDate
-                    ).toLocaleDateString()}
+                    {formatEventDate(reservation.eventDate)}
                   </p>
                 </div>
 
@@ -376,7 +306,7 @@ async function updateReservationStatus(
               </div>
 
               {reservation.message && (
-                <div className="mt-6 rounded-xl bg-[#f5f0e8] p-4">
+                <div className="mt-6 rounded-xl bg-[#eeedeb] p-4">
                   <p className="text-xs text-[#8b8178]">
                     Customer Message
                   </p>
@@ -386,6 +316,31 @@ async function updateReservationStatus(
                   </p>
                 </div>
               )}
+
+              <div className="mt-6 rounded-xl border border-[#eee5dc] bg-[#faf8f5] p-4">
+                <p className="text-xs font-medium uppercase tracking-wide text-[#8b8178]">
+                  Reservation Progress
+                </p>
+                <div className="mt-4 flex flex-wrap items-center gap-2 text-xs">
+                  <span className="rounded-full bg-yellow-100 px-3 py-1 text-yellow-700">Request Received</span>
+                  <span className="text-[#b8afa7]">→</span>
+                  <span className={`rounded-full px-3 py-1 ${
+                    reservation.status === "accepted" || reservation.status === "completed"
+                      ? "bg-green-100 text-green-700"
+                      : reservation.status === "rejected"
+                      ? "bg-red-100 text-red-700"
+                      : "bg-gray-100 text-gray-500"
+                  }`}>
+                    {reservation.status === "rejected" ? "Rejected" : "Your Response"}
+                  </span>
+                  <span className="text-[#b8afa7]">→</span>
+                  <span className={`rounded-full px-3 py-1 ${
+                    reservation.status === "completed"
+                      ? "bg-blue-100 text-blue-700"
+                      : "bg-gray-100 text-gray-500"
+                  }`}>Completed</span>
+                </div>
+              </div>
 
               <div className="mt-6 flex flex-wrap gap-3">
                 {reservation.status === "pending" && (

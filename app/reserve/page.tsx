@@ -21,13 +21,13 @@ export default async function ReservePage({
   const photographerId = params.photographerId;
 
   return (
-    <main className="min-h-screen bg-[#f5f0e8] px-6 py-16">
+    <main className="min-h-screen bg-[#eeedeb] px-6 py-16">
       <div className="mx-auto max-w-6xl">
         <p className="text-sm uppercase tracking-[0.2em] text-[#dd492f]">
           Capture your moments
         </p>
 
-        <h1 className="mt-3 text-5xl font-serif text-[#241914]">
+        <h1 className="mt-3 text-5xl font-sans text-[#241914]">
           Reserve a Photographer
         </h1>
 

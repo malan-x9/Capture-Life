@@ -2,6 +2,7 @@ import { connectDB } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth";
 import Photographer from "@/models/Photographer";
 import Reservation from "@/models/Reservation";
+import Notification from "@/models/Notification";
 import mongoose from "mongoose";
 import { NextResponse } from "next/server";
 
@@ -38,15 +39,18 @@ export async function PATCH(
       );
     }
 
-    const { status } = await request.json();
+    const { status } = (await request.json()) as { status: unknown };
 
     const allowedStatuses = [
       "accepted",
       "rejected",
       "completed",
-    ];
+    ] as const;
 
-    if (!allowedStatuses.includes(status)) {
+    if (
+      typeof status !== "string" ||
+      !allowedStatuses.includes(status as (typeof allowedStatuses)[number])
+    ) {
       return NextResponse.json(
         {
           success: false,
@@ -109,12 +113,42 @@ export async function PATCH(
       );
     }
 
-    reservation.status = status;
+    const reservationStatus = status as (typeof allowedStatuses)[number];
+
+    reservation.status = reservationStatus;
     await reservation.save();
+
+    // Notify the customer about the photographer's status update.
+    // Notification failure should not make the reservation update fail.
+    try {
+      const notificationMessages = {
+        accepted: "Your reservation has been accepted by the photographer.",
+        rejected: "Your reservation has been rejected by the photographer.",
+        completed: "Your reservation has been marked as completed.",
+      } as const;
+
+      const notificationTypes = {
+        accepted: "reservation_accepted",
+        rejected: "reservation_rejected",
+        completed: "reservation_completed",
+      } as const;
+
+      await Notification.create({
+        recipient: reservation.customerId,
+        type: notificationTypes[reservationStatus],
+        message: notificationMessages[reservationStatus],
+        reservationId: reservation._id,
+      });
+    } catch (notificationError) {
+      console.error(
+        "Failed to create reservation status notification:",
+        notificationError
+      );
+    }
 
     return NextResponse.json({
       success: true,
-      message: `Reservation ${status} successfully`,
+      message: `Reservation ${reservationStatus} successfully`,
       reservation,
     });
   } catch (error) {

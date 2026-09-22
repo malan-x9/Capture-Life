@@ -5,7 +5,120 @@ import Photographer, {
   IPortfolioImage,
 } from "@/models/Photographer";
 import cloudinary from "@/lib/cloudinary";
+export async function POST(request: Request) {
+  try {
+    const user = await getCurrentUser();
 
+    if (!user) {
+      return NextResponse.json(
+        {
+          success: false,
+          message: "You must be logged in",
+        },
+        { status: 401 }
+      );
+    }
+
+    if (user.role !== "photographer") {
+      return NextResponse.json(
+        {
+          success: false,
+          message: "Only photographers can upload portfolio images",
+        },
+        { status: 403 }
+      );
+    }
+
+    const formData = await request.formData();
+    const file = formData.get("file") as File | null;
+
+    if (!file) {
+      return NextResponse.json(
+        {
+          success: false,
+          message: "Please select an image",
+        },
+        { status: 400 }
+      );
+    }
+
+    if (!file.type.startsWith("image/")) {
+      return NextResponse.json(
+        {
+          success: false,
+          message: "Only image files are allowed",
+        },
+        { status: 400 }
+      );
+    }
+
+    const maxFileSize = 5 * 1024 * 1024;
+
+    if (file.size > maxFileSize) {
+      return NextResponse.json(
+        {
+          success: false,
+          message: "Image size must be less than 5MB",
+        },
+        { status: 400 }
+      );
+    }
+
+    await connectDB();
+
+    const photographer = await Photographer.findOne({
+      userId: user._id,
+    });
+
+    if (!photographer) {
+      return NextResponse.json(
+        {
+          success: false,
+          message: "Photographer profile not found",
+        },
+        { status: 404 }
+      );
+    }
+
+    const bytes = await file.arrayBuffer();
+    const buffer = Buffer.from(bytes);
+    const base64Image = buffer.toString("base64");
+
+    const dataUri = `data:${file.type};base64,${base64Image}`;
+
+    const uploadResult = await cloudinary.uploader.upload(dataUri, {
+      folder: `capture-life/${user._id}/portfolio`,
+      resource_type: "image",
+    });
+
+    photographer.portfolio.push({
+      url: uploadResult.secure_url,
+      publicId: uploadResult.public_id,
+    });
+
+    await photographer.save();
+
+    return NextResponse.json({
+      success: true,
+      message: "Portfolio image uploaded successfully",
+      image: {
+        url: uploadResult.secure_url,
+        publicId: uploadResult.public_id,
+      },
+      photographer,
+    });
+  } catch (error) {
+    console.error("Upload portfolio image error:", error);
+
+    return NextResponse.json(
+      {
+        success: false,
+        message: "Something went wrong while uploading the image",
+      },
+      { status: 500 }
+    );
+  }
+}
 export async function DELETE(request: Request) {
   try {
     const user = await getCurrentUser();

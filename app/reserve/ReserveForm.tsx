@@ -7,7 +7,10 @@ type Photographer = {
   businessName: string;
   location: string;
   startingPrice: number;
-  portfolio: string[];
+  portfolio: {
+    url: string;
+    publicId: string;
+  }[];
   isAvailable: boolean;
 };
 
@@ -132,13 +135,13 @@ export default function ReserveForm({
       <div className="rounded-2xl bg-[#e8dfd4] p-6">
         {photographer.portfolio?.[0] && (
           <img
-            src={photographer.portfolio[0]}
+            src={photographer.portfolio[0].url}
             alt={photographer.businessName}
             className="h-64 w-full rounded-xl object-cover"
           />
         )}
 
-        <h2 className="mt-6 text-3xl font-serif text-[#241914]">
+        <h2 className="mt-6 text-3xl font-sans text-[#241914]">
           {photographer.businessName}
         </h2>
 
@@ -174,7 +177,7 @@ export default function ReserveForm({
         onSubmit={handleSubmit}
         className="rounded-2xl bg-white p-8 shadow-sm"
       >
-        <h2 className="text-3xl font-serif text-[#241914]">
+        <h2 className="text-3xl font-sans text-[#241914]">
           Reservation Details
         </h2>
 

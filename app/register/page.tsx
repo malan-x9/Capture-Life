@@ -53,11 +53,11 @@ export default function RegisterPage() {
   }
 
   return (
-    <main className="min-h-screen bg-[#f5f0e8] px-6 py-16">
+    <main className="min-h-screen bg-[#eeedeb] px-6 py-16">
       <div className="mx-auto max-w-md">
 
         <div className="mb-10 text-center">
-          <h1 className="text-4xl font-serif text-[#241914]">
+          <h1 className="text-4xl font-sans text-[#241914]">
             Create your account
           </h1>
 

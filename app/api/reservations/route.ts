@@ -2,6 +2,7 @@ import { connectDB } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth";
 import Photographer from "@/models/Photographer";
 import Reservation from "@/models/Reservation";
+import Notification from "@/models/Notification";
 import mongoose from "mongoose";
 import { NextResponse } from "next/server";
 
@@ -156,6 +157,22 @@ if (!photographer.isAvailable) {
       eventLocation,
       message: message || "",
     });
+
+    // Notify the photographer about the new reservation request.
+    // Notification failure should not make a successful reservation fail.
+    try {
+      await Notification.create({
+        recipient: photographer.userId,
+        type: "reservation_created",
+        message: `New reservation request from ${user.name}`,
+        reservationId: reservation._id,
+      });
+    } catch (notificationError) {
+      console.error(
+        "Failed to create reservation notification:",
+        notificationError
+      );
+    }
 
     return NextResponse.json(
       {

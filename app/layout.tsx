@@ -2,14 +2,14 @@ import type { Metadata } from "next";
 import { Playfair_Display, Inter } from "next/font/google";
 import "./globals.css";
 import Navbar from "./Navbar";
-// Heavy display serif for headlines — matches the "Capturing your wedding's..." style
+// Heavy display sans for headlines — matches the "Capturing your wedding's..." style
 const playfair = Playfair_Display({
   subsets: ["latin"],
   weight: ["700", "800", "900"],
   variable: "--font-playfair",
 });
 
-// Body/nav sans-serif (swap for whatever you're already using)
+// Body/nav sans-sans (swap for whatever you're already using)
 const inter = Inter({
   subsets: ["latin"],
   variable: "--font-inter",

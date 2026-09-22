@@ -12,7 +12,10 @@ type Photographer = {
   specialties: string[];
   experience: number;
   startingPrice: number;
-  portfolio: string[];
+  portfolio: {
+    url: string;
+    publicId: string;
+  }[];
   isAvailable: boolean;
   userId?: {
     name: string;
@@ -56,7 +59,7 @@ export default function PhotographerDetailsPage() {
 
   if (loading) {
     return (
-      <main className="min-h-screen bg-[#f5f0e8] px-6 py-16">
+      <main className="min-h-screen bg-[#eeedeb] px-6 py-16">
         <p className="text-center text-[#6b625b]">
           Loading photographer profile...
         </p>
@@ -66,7 +69,7 @@ export default function PhotographerDetailsPage() {
 
   if (message || !photographer) {
     return (
-      <main className="min-h-screen bg-[#f5f0e8] px-6 py-16">
+      <main className="min-h-screen bg-[#eeedeb] px-6 py-16">
         <div className="mx-auto max-w-3xl">
           <p className="rounded-xl bg-red-100 p-4 text-red-700">
             {message || "Photographer not found"}
@@ -77,12 +80,12 @@ export default function PhotographerDetailsPage() {
   }
 
   return (
-    <main className="min-h-screen bg-[#f5f0e8] px-6 py-16">
+    <main className="min-h-screen bg-[#eeedeb] px-6 py-16">
       <div className="mx-auto max-w-6xl">
         {/* Back Link */}
         <Link
           href="/gallery"
-          className="text-sm font-medium text-[#dd492f] hover:underline"
+          className="text-sm font-sans font-medium text-[#dd492f] hover:underline"
         >
           ← Back to Gallery
         </Link>
@@ -90,31 +93,31 @@ export default function PhotographerDetailsPage() {
         {/* Header */}
         <section className="mt-8 grid gap-10 md:grid-cols-2 md:items-center">
           <div className="overflow-hidden rounded-2xl bg-[#e8dfd4]">
-            {photographer.portfolio?.[0] ? (
-              <img
-                src={photographer.portfolio[0]}
-                alt={photographer.businessName}
-                className="h-[420px] w-full object-cover"
-              />
-            ) : photographer.userId?.profileImage ? (
-              <img
-                src={photographer.userId.profileImage}
-                alt={photographer.businessName}
-                className="h-[420px] w-full object-cover"
-              />
-            ) : (
-              <div className="flex h-[420px] items-center justify-center text-[#8b8178]">
-                No profile image
-              </div>
-            )}
-          </div>
+  {photographer.userId?.profileImage ? (
+    <img
+      src={photographer.userId.profileImage}
+      alt={photographer.businessName}
+      className="h-105 w-full object-cover"
+    />
+  ) : photographer.portfolio?.[0] ? (
+    <img
+      src={photographer.portfolio[0].url}
+      alt={photographer.businessName}
+      className="h-105 w-full object-cover"
+    />
+  ) : (
+    <div className="flex h-105 items-center justify-center text-[#8b8178]">
+      No profile image
+    </div>
+  )}
+</div>
 
           <div>
             <p className="text-sm uppercase tracking-[0.2em] text-[#dd492f]">
               Photographer
             </p>
 
-            <h1 className="mt-3 text-5xl font-serif text-[#241914]">
+            <h1 className="mt-3 text-5xl font-sans text-[#241914]">
               {photographer.businessName}
             </h1>
 
@@ -184,20 +187,20 @@ export default function PhotographerDetailsPage() {
               Selected work
             </p>
 
-            <h2 className="mt-2 text-4xl font-serif text-[#241914]">
+            <h2 className="mt-2 text-4xl font-sans text-[#241914]">
               Portfolio
             </h2>
           </div>
 
           {photographer.portfolio?.length > 0 ? (
             <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-              {photographer.portfolio.map((imageUrl, index) => (
+              {photographer.portfolio.map((image, index) => (
                 <div
-                  key={`${imageUrl}-${index}`}
+                  key={`${image.publicId || image.url}-${index}`}
                   className="group overflow-hidden rounded-2xl bg-[#e8dfd4]"
                 >
                   <img
-                    src={imageUrl}
+                    src={image.url}
                     alt={`${photographer.businessName} portfolio image ${
                       index + 1
                     }`}
